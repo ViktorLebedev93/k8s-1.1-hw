@@ -67,6 +67,29 @@
 
 ### Решение 1
 
+Установка MicroK8S
+```shell
+sudo apt update
+sudo apt install snapd -y
+sudo snap install microk8s --classic
+sudo usermod -a -G microk8s $USER
+sudo chown -f -R $USER ~/.kube
+newgrp microk8s
+```
+Установка dashboard
+```shell
+microk8s enable helm3 dns ingress
+microk8s helm3 repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+microk8s helm3 repo update
+microk8s helm3 install my-headlamp headlamp/headlamp --namespace kube-system
+Cviktor@microk8s:~$ microk8s kubectl --namespace kube-system port-forward $POD_NAME 8080:$CONTAINER_PORT
+Forwarding from 127.0.0.1:8080 -> 4466
+Forwarding from [::1]:8080 -> 4466
+Handling connection for 8080
+Handling connection for 8080
+Handling connection for 8080
+```
+
 ------
 
 ### Задание 2. Установка и настройка локального kubectl
@@ -75,6 +98,35 @@
 3. Подключиться к дашборду с помощью port-forward.
 
 ### Решение 2
+
+Установка kubectl и подключение
+```shell
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+source ~/.bashrc
+mkdir -p ~/.kube
+nano ~/.kube/config #Вставляем содержимое взятое с сервера командой microk8s config
+chmod 600 ~/.kube/config
+viktor@nexus:~$ kubectl cluster-info
+Kubernetes control plane is running at https://10.129.0.3:16443
+CoreDNS is running at https://10.129.0.3:16443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+viktor@nexus:~$ kubectl get nodes
+NAME       STATUS   ROLES    AGE   VERSION
+microk8s   Ready    <none>   60m   v1.33.7
+```
+
+Подключение к дашборду через port-forward
+```shell
+kubectl port-forward -n kube-system service/my-headlamp 8080:80
+kubectl -n kube-system create token my-headlamp
+http://localhost:8080
+```
+
+![img1](img1.jpg)
 
 ------
 
